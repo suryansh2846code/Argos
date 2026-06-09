@@ -12,6 +12,14 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
+import os
+
+# Load .env file for local development (safe no-op if file missing or dotenv not installed)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent.parent / '.env')
+except ImportError:
+    pass  # python-dotenv not installed — env vars must be set manually
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -148,3 +156,12 @@ SIMPLE_JWT = {
     'UPDATE_LAST_LOGIN': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ImageKit CDN storage
+# Set these in backend/.env (local) or Railway/Render env vars (production).
+# ─────────────────────────────────────────────────────────────────────────────
+
+IMAGEKIT_PUBLIC_KEY   = os.environ.get('IMAGEKIT_PUBLIC_KEY',   '')
+IMAGEKIT_PRIVATE_KEY  = os.environ.get('IMAGEKIT_PRIVATE_KEY',  '')
+IMAGEKIT_URL_ENDPOINT = os.environ.get('IMAGEKIT_URL_ENDPOINT', '')

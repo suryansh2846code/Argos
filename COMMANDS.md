@@ -51,8 +51,8 @@ pip install -r requirements.txt
 pip install <package-name>
 pip freeze > requirements.txt
 
-# Install ImageKit SDK (for media uploads)
-pip install imagekitio
+# Install ImageKit SDK + dotenv (already in requirements.txt)
+pip install imagekitio python-dotenv
 pip freeze > requirements.txt
 
 # Upgrade pip itself
@@ -100,7 +100,21 @@ cd "backend" && source venv/bin/activate && python manage.py runserver 8000
 cd "frontend" && npm start
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 6. GIT
+# 6. IMAGEKIT — Environment Variables
+#    Store these in backend/.env (never commit to git)
+#    For production (Railway / Render): add as environment variables in dashboard
+# ══════════════════════════════════════════════════════════════════════════════
+
+# backend/.env contents:
+IMAGEKIT_PUBLIC_KEY=public_xxxxxxxxxxxxx
+IMAGEKIT_PRIVATE_KEY=private_xxxxxxxxxxxxx
+IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your_id
+
+# Get credentials from: https://imagekit.io/dashboard/developer/api-keys
+# URL endpoint from:    https://imagekit.io/dashboard  (URL Endpoint section)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 7. GIT
 # ══════════════════════════════════════════════════════════════════════════════
 
 git status

@@ -173,4 +173,61 @@ class NodeAttachmentViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(uploaded_by=self.request.user)
+        """
+        If the request contains a file (image / gif / video upload),
+        upload it to ImageKit before saving the DB row.
+
+        Flow:
+          1. Validate attachment_type + file via imagekit_service
+          2. Upload to /argos/maps/{map_id}/nodes/{node_id}/
+          3. Set external_url = CDN URL, imagekit_file_id, imagekit_thumbnail_url
+          4. Save with file=None (file is on ImageKit, not local disk)
+
+        Link attachments and YouTube URLs bypass ImageKit entirely.
+        """
+        from rest_framework.exceptions import ValidationError as DRFValidationError
+        from .imagekit_service import upload_to_imagekit, validate_upload
+
+        attachment_type = serializer.validated_data.get('attachment_type', '')
+        file = self.request.FILES.get('file')
+
+        extra = {'uploaded_by': self.request.user}
+
+        should_upload = (
+            file is not None
+            and attachment_type in ('image', 'gif', 'video')
+        )
+
+        if should_upload:
+            node = serializer.validated_data['node']
+            folder = f'/argos/maps/{node.map_id}/nodes/{node.id}'
+
+            try:
+                result = upload_to_imagekit(
+                    file=file,
+                    filename=file.name,
+                    folder=folder,
+                    attachment_type=attachment_type,
+                )
+            except ValueError as exc:
+                # Size / MIME type validation failure — return 400
+                raise DRFValidationError({'file': str(exc)})
+            # ImageKit API errors propagate as 500 (unexpected)
+
+            extra['external_url']          = result['url']
+            extra['imagekit_file_id']      = result['file_id']
+            extra['imagekit_thumbnail_url'] = result.get('thumbnail_url') or ''
+            extra['file']                  = None   # do not write to local disk
+
+        serializer.save(**extra)
+
+    def perform_destroy(self, instance):
+        """
+        Delete the ImageKit CDN file (best-effort) before removing the DB row.
+        A failed CDN delete is logged but never blocks the DB deletion.
+        """
+        if instance.imagekit_file_id:
+            from .imagekit_service import delete_from_imagekit
+            delete_from_imagekit(instance.imagekit_file_id)
+
+        super().perform_destroy(instance)

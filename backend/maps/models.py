@@ -218,11 +218,26 @@ class NodeAttachment(models.Model):
         upload_to='attachments/%Y/%m/',
         blank=True,
         null=True,
+        help_text='Legacy local file storage. New uploads use ImageKit (external_url).'
     )
     external_url = models.URLField(
         max_length=500,
         blank=True,
         default='',
+        help_text='CDN URL (ImageKit) for media, YouTube URL for video links, or link URL.'
+    )
+    # ImageKit metadata — populated automatically on upload, used for CDN deletion
+    imagekit_file_id = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text='ImageKit fileId — used to delete the CDN file when the attachment is removed.',
+    )
+    imagekit_thumbnail_url = models.URLField(
+        max_length=500,
+        blank=True,
+        default='',
+        help_text='ImageKit thumbnail URL (400×300, images/GIFs only).'
     )
     title = models.CharField(max_length=255, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -238,10 +253,15 @@ class NodeAttachment(models.Model):
         if self.attachment_type == AttachmentType.LINK:
             if not self.external_url:
                 raise ValidationError('Link attachments require an external URL.')
-        elif self.attachment_type == AttachmentType.VIDEO and self.external_url:
+        elif self.external_url:
+            # external_url can substitute for file:
+            #   - ImageKit CDN URLs (images, GIFs, videos)
+            #   - YouTube / external video URLs
             return
         elif not self.file:
-            raise ValidationError('File attachments require an uploaded file.')
+            raise ValidationError(
+                'File attachments require either an uploaded file or a CDN URL.'
+            )
 
     def save(self, *args, **kwargs):
         self.full_clean()

@@ -84,17 +84,44 @@ class NodeAttachmentSerializer(serializers.ModelSerializer):
         model = NodeAttachment
         fields = [
             'id', 'node', 'uploaded_by', 'attachment_type',
-            'file', 'file_url', 'external_url', 'title', 'created_at',
+            'file', 'file_url', 'external_url', 'title',
+            'imagekit_file_id', 'imagekit_thumbnail_url',
+            'created_at',
         ]
-        read_only_fields = ['id', 'uploaded_by', 'file_url', 'created_at']
+        read_only_fields = [
+            'id', 'uploaded_by', 'file_url',
+            'imagekit_file_id', 'imagekit_thumbnail_url',
+            'created_at',
+        ]
         extra_kwargs = {'file': {'required': False}}
 
     def get_file_url(self, obj):
+        """
+        Return the URL that the frontend uses to render the media.
+
+        Priority:
+          1. external_url (ImageKit CDN URL for new uploads, YouTube for videos)
+             — used for all non-link types when set
+          2. Legacy local FileField URL (pre-ImageKit attachments)
+          3. None
+
+        Note: Link attachments return None here; the frontend renders
+        attachment.external_url directly for links.
+        """
+        if obj.attachment_type == AttachmentType.LINK:
+            return None
+
+        # ImageKit CDN URL or YouTube URL — preferred
+        if obj.external_url:
+            return obj.external_url
+
+        # Legacy local file (pre-ImageKit)
         if obj.file:
             request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(obj.file.url)
             return obj.file.url
+
         return None
 
     def validate(self, attrs):
@@ -102,7 +129,7 @@ class NodeAttachmentSerializer(serializers.ModelSerializer):
             'attachment_type',
             getattr(self.instance, 'attachment_type', None),
         )
-        file = attrs.get('file')
+        file         = attrs.get('file')
         external_url = attrs.get('external_url', '')
 
         if attachment_type == AttachmentType.LINK:
@@ -111,8 +138,12 @@ class NodeAttachmentSerializer(serializers.ModelSerializer):
                     {'external_url': 'Link attachments require a URL.'}
                 )
         elif attachment_type == AttachmentType.VIDEO and external_url:
+            # YouTube / external video URL — no file needed
             pass
-        elif not file and not (self.instance and self.instance.file):
+        elif not file and not (self.instance and (self.instance.file or self.instance.external_url)):
+            # Allow if no file provided yet — ImageKit upload happens in perform_create
+            # before serializer.save(), so the file IS present in request.FILES at this point.
+            # This branch only triggers on genuinely missing files.
             raise serializers.ValidationError(
                 {'file': 'File attachments require an uploaded file.'}
             )

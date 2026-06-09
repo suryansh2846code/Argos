@@ -6,7 +6,7 @@ import {
   clearTokens,
 } from '../auth/tokenStorage';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
+const BASE_URL = process.env.REACT_APP_API_URL || 'https://argos-ft0p.onrender.com/api';
 
 export const AUTH_LOGOUT_EVENT = 'argos:auth-logout';
 

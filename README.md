@@ -125,6 +125,26 @@ Set these in `frontend/.env` for local dev or in Vercel settings dashboard for p
    * `IMAGEKIT_URL_ENDPOINT`
 5. Railway will build the service using `nixpacks` (running `collectstatic` automatically) and start it using the defined `Procfile` (`gunicorn`).
 
+### Backend — Render
+
+1. In Render, create a new **Web Service** and connect this GitHub repository.
+2. Configure the following fields:
+   - **Name**: `argos-backend`
+   - **Runtime**: `Python 3`
+   - **Root Directory**: `backend`
+   - **Build Command**: `pip install -r requirements.txt && python manage.py collectstatic --noinput`
+   - **Start Command**: `python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 60`
+3. Add the required environment variables in the **Environment** tab:
+   - `SECRET_KEY` (use a long, random secure string)
+   - `DEBUG` = `False`
+   - `ALLOWED_HOSTS` = `your-app-name.onrender.com` (or your custom domain)
+   - `DATABASE_URL` = (your Neon PostgreSQL connection string)
+   - `CORS_ALLOWED_ORIGINS` = (your Vercel frontend URL, e.g., `https://argos.vercel.app`)
+   - `IMAGEKIT_PUBLIC_KEY` = (from ImageKit dashboard)
+   - `IMAGEKIT_PRIVATE_KEY` = (from ImageKit dashboard)
+   - `IMAGEKIT_URL_ENDPOINT` = (from ImageKit dashboard)
+4. Deploy the service.
+
 ### Frontend — Vercel
 
 1. In Vercel, import your repository.
@@ -133,5 +153,5 @@ Set these in `frontend/.env` for local dev or in Vercel settings dashboard for p
    * **Framework Preset**: Create React App
    * **Build Command**: `npm run build`
    * **Output Directory**: `build`
-4. Add the `REACT_APP_API_URL` environment variable pointing to the Railway API URL.
+4. Add the `REACT_APP_API_URL` environment variable pointing to the Render backend URL (e.g., `https://your-app-name.onrender.com/api`).
 5. Deploy. The `vercel.json` file ensures that React Router paths are redirected to `index.html` on hard refreshes.

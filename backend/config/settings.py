@@ -16,6 +16,7 @@ import os
 # Load .env for local development
 # ─────────────────────────────────────────────────────────────────────────────
 try:
+    # pyrefly: ignore [missing-import]
     from dotenv import load_dotenv
     load_dotenv(Path(__file__).resolve().parent.parent / '.env')
 except ImportError:
@@ -111,6 +112,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Railway sets DATABASE_URL automatically when you attach a PostgreSQL plugin.
 # Local fallback uses your local postgres credentials via .env.
 # ─────────────────────────────────────────────────────────────────────────────
+# pyrefly: ignore [missing-import]
 import dj_database_url
 
 _DATABASE_URL = os.environ.get(
@@ -228,7 +230,7 @@ SIMPLE_JWT = {
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ImageKit CDN storage
-# Set in backend/.env (local) or Railway Variables (production).
+# Set in backend/.env (local) or Railway/Render environment variables.
 # ─────────────────────────────────────────────────────────────────────────────
 IMAGEKIT_PUBLIC_KEY   = os.environ.get('IMAGEKIT_PUBLIC_KEY',   '')
 IMAGEKIT_PRIVATE_KEY  = os.environ.get('IMAGEKIT_PRIVATE_KEY',  '')

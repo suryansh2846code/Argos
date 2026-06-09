@@ -1,24 +1,39 @@
-# Python
+# Python / Virtualenv
 venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.pytest_cache/
 
 # Django
 db.sqlite3
+backend/staticfiles/
+backend/media/
 staticfiles/
+media/
 
-# Environment
+# Environment configurations
 .env
+backend/.env
+frontend/.env
+*.local
 
-# Node
+# Node / Frontend Build
 node_modules/
+frontend/node_modules/
 build/
+frontend/build/
+dist/
+frontend/dist/
 
-# macOS
+# macOS / System
 .DS_Store
+Thumbs.db
 
-# VS Code
+# IDEs
 .vscode/
+.idea/
 
 # Logs
 *.log

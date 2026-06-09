@@ -185,6 +185,7 @@ class NodeAttachmentViewSet(viewsets.ModelViewSet):
 
         Link attachments and YouTube URLs bypass ImageKit entirely.
         """
+        # pyrefly: ignore [missing-import]
         from rest_framework.exceptions import ValidationError as DRFValidationError
         from .imagekit_service import upload_to_imagekit, validate_upload
 

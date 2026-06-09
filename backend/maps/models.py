@@ -6,15 +6,20 @@ from django.conf import settings
 # pyrefly: ignore [missing-import]
 from django.core.exceptions import ValidationError
 
+class BoardType(models.TextChoices):
+    FREEFORM = 'freeform', 'Freeform'
+    DEBATE   = 'debate',   'Debate'
+
+
 class Map(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(
-        max_length=255, 
+        max_length=255,
         help_text="The title of the argument map."
     )
     description = models.TextField(
-        blank=True, 
-        default="", 
+        blank=True,
+        default="",
         help_text="Detailed description or goal of the map."
     )
     creator = models.ForeignKey(
@@ -26,6 +31,12 @@ class Map(models.Model):
     is_public = models.BooleanField(
         default=True,
         help_text="Whether this map is publicly visible or private."
+    )
+    board_type = models.CharField(
+        max_length=20,
+        choices=BoardType.choices,
+        default=BoardType.FREEFORM,
+        help_text="Board type chosen at creation. Immutable after creation."
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -106,8 +117,9 @@ class Node(models.Model):
 
 
 class EdgeType(models.TextChoices):
-    SUPPORT = 'support', 'Support'
-    COUNTER = 'counter', 'Counter'
+    SUPPORT   = 'support',   'Support'
+    COUNTER   = 'counter',   'Counter'
+    REFERENCE = 'reference', 'Reference'
 
 
 class Edge(models.Model):

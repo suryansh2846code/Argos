@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from .models import (
     Map, Node, Edge, NodeAttachment, NodeVote,
-    AttachmentType, VoteType,
+    AttachmentType, VoteType, BoardType,
 )
 
 User = get_user_model()
@@ -62,9 +62,18 @@ class MapSerializer(serializers.ModelSerializer):
         model = Map
         fields = [
             'id', 'title', 'description', 'creator', 'is_public',
-            'created_at', 'updated_at', 'nodes_count',
+            'board_type', 'created_at', 'updated_at', 'nodes_count',
         ]
         read_only_fields = ['id', 'creator', 'created_at', 'updated_at', 'nodes_count']
+
+    def validate_board_type(self, value):
+        # board_type is immutable after creation
+        if self.instance is not None:
+            if value != self.instance.board_type:
+                raise serializers.ValidationError(
+                    'Board type cannot be changed after creation.'
+                )
+        return value
 
 
 class NodeAttachmentSerializer(serializers.ModelSerializer):
